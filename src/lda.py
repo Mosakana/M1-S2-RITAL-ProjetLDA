@@ -66,15 +66,15 @@ def load_docs_in_bow(path, n_doc=None):
 
         vectors = bow.fit_transform(collection)
         vocabulary = bow.get_feature_names_out()
-        saved_objects = [vocabulary, vectors]
+        saved_objects = [vocabulary, vectors, doc_id]
 
         with open(save_path, 'wb') as file:
             pkl.dump(saved_objects, file)
     else:
         with open(save_path, 'rb') as file:
-            vocabulary, vectors = pkl.load(file)
+            vocabulary, vectors, doc_id = pkl.load(file)
 
-    return vocabulary, vectors
+    return vocabulary, vectors, doc_id
 
 
 def process_vectors(vectors):
@@ -88,11 +88,10 @@ def process_vectors(vectors):
     return dict_document
 
 
-def assign_topic(dict_document, n_topics, alpha):
+def assign_topic(dict_document, n_topics):
     topic_assignment = {}
-    dirichlet = np.random.dirichlet([alpha] * n_topics)
     for document, sequence in dict_document.items():
-        topics = np.random.choice(n_topics, len(sequence), p=dirichlet, replace=True)
+        topics = np.random.choice(n_topics, len(sequence), replace=True)
         topic_assignment[document] = list(zip(sequence, topics))
 
     return topic_assignment
@@ -148,17 +147,44 @@ def gibbs_sampling(topic_assignment, alpha, beta, n_topics, n_vocabularies):
     return new_topic_assignment
 
 
+def lda(topic_assignment, n_topics, n_vocabularies, epochs, alpha, beta):
+    converge = False
+
+    for i in range(epochs):
+        print(f"------- Starting {i + 1} iteration -------\n")
+        last_assignment = topic_assignment
+        topic_assignment = gibbs_sampling(topic_assignment, alpha, beta, n_topics, n_vocabularies)
+
+    for res_word_topic, last_word_topic in zip(topic_assignment.values(), last_assignment.values()):
+        converge = np.all(np.array(res_word_topic) == np.array(last_word_topic))
+
+    return topic_assignment, converge
+
+def average_document_length(dict_document):
+    total_length = 0
+    document_counter = 0
+    for words in dict_document.values():
+        total_length += len(words)
+        document_counter += 1
+
+    return total_length / document_counter
 
 
 
-path_to_doc = "../data/docs_trec_covid"
-vocabulary, vectors = load_docs_in_bow(path_to_doc, n_doc=10)
-dict_document = process_vectors(vectors)
-assignment = assign_topic(dict_document, N_TOPIC, ALPHA)
-Mwt = compute_word_topic_matrix(assignment, len(vocabulary), N_TOPIC)
-Mdt = compute_document_topic_matrix(assignment, N_TOPIC)
 
-sampled_topic(1, 2, Mwt, Mdt, alpha, beta, N_TOPIC, len(vocabulary))
+
+# path_to_doc = "../data/docs_trec_covid"
+# vocabulary, vectors = load_docs_in_bow(path_to_doc, n_doc=10)
+# dict_document = process_vectors(vectors)
+# assignment = assign_topic(dict_document, N_TOPIC, ALPHA)
+# Mwt = compute_word_topic_matrix(assignment, len(vocabulary), N_TOPIC)
+# Mdt = compute_document_topic_matrix(assignment, N_TOPIC)
+#
+# sampled_topic(1, 2, Mwt, Mdt, alpha, beta, N_TOPIC, len(vocabulary))
+
+# after_lda = lda(dict_document, N_TOPIC, len(vocabulary), EPOCHS, ALPHA, BETA)
+#
+# print(after_lda)
 
 
 # print(dict_doc[list(dict_doc.keys())[0]])
