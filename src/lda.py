@@ -115,10 +115,11 @@ def compute_word_topic_matrix(topic_assignment, n_topics, n_vocabularies):
 def compute_document_topic_matrix(topic_assignment, n_topics):
     Mdt = np.zeros((len(topic_assignment), n_topics), dtype=np.int32)
     for document, word_topic in topic_assignment.items():
-        document_topic_counter = Counter(list(np.array(word_topic, dtype=np.int32)[:, 1]))
-        index_topic = list(document_topic_counter.keys())
-        counts = list(document_topic_counter.values())
-        Mdt[document, index_topic] = counts
+        if len(word_topic) != 0:
+            document_topic_counter = Counter(list(np.array(word_topic, dtype=np.int32)[:, 1]))
+            index_topic = list(document_topic_counter.keys())
+            counts = list(document_topic_counter.values())
+            Mdt[document, index_topic] = counts
     return Mdt
 
 
@@ -147,6 +148,7 @@ def sampled_topic(word, document, topic_assignment, alpha, beta, n_topics, n_voc
 def gibbs_sampling(topic_assignment, alpha, beta, n_topics, n_vocabularies):
     new_topic_assignment = {}
     for document, word_topic in topic_assignment.items():
+        print(f"\t\t sampling {document} document...")
         new_topic_assignment[document] = []
         for word, topic in word_topic:
             new_topic_assignment[document].append(
@@ -156,17 +158,11 @@ def gibbs_sampling(topic_assignment, alpha, beta, n_topics, n_vocabularies):
 
 
 def lda(topic_assignment, n_topics, n_vocabularies, epochs, alpha, beta):
-    converge = False
-
     for i in range(epochs):
-        print(f"------- Starting {i + 1} iteration -------\n")
-        last_assignment = topic_assignment
+        print(f"\tStarting {i + 1} iteration...\n")
         topic_assignment = gibbs_sampling(topic_assignment, alpha, beta, n_topics, n_vocabularies)
 
-    for res_word_topic, last_word_topic in zip(topic_assignment.values(), last_assignment.values()):
-        converge = np.all(np.array(res_word_topic) == np.array(last_word_topic))
-
-    return topic_assignment, converge
+    return topic_assignment
 
 
 def average_document_length(dict_document):
