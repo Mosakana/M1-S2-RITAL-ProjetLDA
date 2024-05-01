@@ -123,10 +123,7 @@ def compute_document_topic_matrix(topic_assignment, n_topics):
     return Mdt
 
 
-def get_distribution(term, document, topic_assignment, alpha, beta, n_topics, n_vocabularies):
-    Mwt = compute_word_topic_matrix(topic_assignment, n_topics, n_vocabularies)
-    Mdt = compute_document_topic_matrix(topic_assignment, n_topics)
-
+def get_distribution(term, document, Mwt, Mdt, alpha, beta, n_topics, n_vocabularies):
     distribution = []
     for i in range(n_topics):
         Pwt = (Mwt[term, i] + beta) / (np.sum(Mwt[:, i]) + n_vocabularies * beta)
@@ -136,9 +133,9 @@ def get_distribution(term, document, topic_assignment, alpha, beta, n_topics, n_
     return distribution
 
 
-def sampled_topic(word, document, topic_assignment, alpha, beta, n_topics, n_vocabularies):
+def sampled_topic(word, document, Mwt, Mdt, alpha, beta, n_topics, n_vocabularies):
     # normalization
-    distribution = np.array(get_distribution(word, document, topic_assignment, alpha, beta, n_topics, n_vocabularies))
+    distribution = np.array(get_distribution(word, document, Mwt, Mdt, alpha, beta, n_topics, n_vocabularies))
     distribution /= distribution.sum()
 
     sample_multinomial = np.random.multinomial(1, distribution)
@@ -147,12 +144,14 @@ def sampled_topic(word, document, topic_assignment, alpha, beta, n_topics, n_voc
 
 def gibbs_sampling(topic_assignment, alpha, beta, n_topics, n_vocabularies):
     new_topic_assignment = {}
+    Mwt = compute_word_topic_matrix(topic_assignment, n_topics, n_vocabularies)
+    Mdt = compute_document_topic_matrix(topic_assignment, n_topics)
     for document, word_topic in topic_assignment.items():
         print(f"\t\t sampling {document} document...")
         new_topic_assignment[document] = []
         for word, topic in word_topic:
             new_topic_assignment[document].append(
-                (word, sampled_topic(word, document, topic_assignment, alpha, beta, n_topics, n_vocabularies)))
+                (word, sampled_topic(word, document, Mwt, Mdt, alpha, beta, n_topics, n_vocabularies)))
 
     return new_topic_assignment
 
