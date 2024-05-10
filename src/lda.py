@@ -236,29 +236,6 @@ def compute_cf(dict_document):
     return Counter(collection)
 
 
-def dirichlet_smooth(term, doc, cf, all_cf, mu):
-    return (compute_tf(term, doc) + mu * cf / all_cf) / (len(doc) + mu)
-
-
-def get_term_probability(term, doc, cf, all_cf, lda_distribution, mu, sigma):
-    dirichlet = dirichlet_smooth(term, doc, cf, all_cf, mu)
-
-    return sigma * dirichlet + (1 - sigma) * sum(lda_distribution)
-
-def query_score(query, dict_document, topic_assignment, n_topics, n_vocabularies, alpha, beta):
-    cf_counter = compute_cf(dict_document)
-    all_cf = sum(list(cf_counter.values()))
-
-    scores = []
-    for doc in range(len(dict_document)):
-        score = 0
-        for term in query:
-            distribution = get_distribution(term, doc, topic_assignment, alpha, beta, n_topics, n_vocabularies)
-            score += np.log(get_term_probability(term, dict_document[doc], cf_counter[term], all_cf, distribution, 1000, 0.7))
-
-        scores.append(score)
-
-    return scores
 
 
 
