@@ -16,9 +16,13 @@ BATCH = 50
 np.random.seed(42)
 
 
-def load_docs_in_bow(path, n_doc=None):
+def load_docs_in_bow(path, n_doc=None, docs_selected=None):
+    assert not(n_doc and docs_selected), "only one parameters can be activated."
+
     if n_doc:
         save_path = path + f"_{n_doc}docs.pkl"
+    elif docs_selected:
+        save_path = path + "_selected_docs.pkl"
     else:
         save_path = path + '.pkl'
 
@@ -62,6 +66,24 @@ def load_docs_in_bow(path, n_doc=None):
 
                 collection.append(doc_tmps)
                 indice += 1
+
+        if docs_selected:
+            selected_doc = []
+            selected_doc_id = []
+            for doc in docs_selected:
+                if doc in doc_id:
+                    selected_doc.append(collection[doc_id.index(doc)])
+                    selected_doc_id.append(doc)
+
+            # random_doc = np.random.randint(len(doc_id), len(docs))
+            #
+            # for i in random_doc:
+            #     if doc_id[i] not in selected_doc_id:
+            #         selected_doc_id.append(doc_id[i])
+            #         selected_doc.append(collection[i])
+
+            doc_id = selected_doc_id
+            collection = selected_doc
 
         prepro = lambda x: preprocess(x)
         english_stopwords = stopwords.words('english')
@@ -234,48 +256,3 @@ def compute_tf(term, doc):
 def compute_cf(dict_document):
     collection = list(itertools.chain(*dict_document.values()))
     return Counter(collection)
-
-
-
-
-
-# path_to_doc = "../data/docs_trec_covid"
-# vocabulary, vectors, doc_id = load_docs_in_bow(path_to_doc, n_doc=10)
-#
-# dict_document = process_vectors(vectors)
-#
-# topic_assignment = assign_topic(dict_document, N_TOPIC)
-#
-# for i in range(EPOCHS // BATCH):
-#     topic_assignment, is_converge = lda(topic_assignment, N_TOPIC, len(vocabulary), BATCH, ALPHA, BETA)
-#     print(f'after {(i + 1) * BATCH} iterations, learning converges : {is_converge}\n')
-#     if is_converge:
-#         break
-#
-# cf_counter = compute_cf(dict_document)
-# all_cf = 0
-# for i in range(len(vocabulary)):
-#     all_cf += cf_counter[i]
-#
-# query = ['antigen', 'statist']
-# int_query = list(map(lambda x: list(vocabulary).index(x), query))
-# scores = query_score(int_query, dict_document, topic_assignment, N_TOPIC, len(vocabulary), ALPHA, BETA)
-# print(scores)
-#
-# for i in range(EPOCHS):
-#     topic_assignment, is_converge = lda(topic_assignment, N_TOPIC, len(vocabulary), EPOCHS, ALPHA, BETA)
-# dict_document = process_vectors(vectors)
-# assignment = assign_topic(dict_document, N_TOPIC, ALPHA)
-# Mwt = compute_word_topic_matrix(assignment, len(vocabulary), N_TOPIC)
-# Mdt = compute_document_topic_matrix(assignment, N_TOPIC)
-#
-# sampled_topic(1, 2, Mwt, Mdt, alpha, beta, N_TOPIC, len(vocabulary))
-
-# after_lda = lda(dict_document, N_TOPIC, len(vocabulary), EPOCHS, ALPHA, BETA)
-#
-# print(after_lda)
-
-
-# print(dict_doc[list(dict_doc.keys())[0]])
-
-
