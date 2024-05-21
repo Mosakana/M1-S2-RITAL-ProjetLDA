@@ -250,7 +250,7 @@ def get_document_assignment_info(topic_assignment, doc_id, n_topics, n_documents
 
 
 def compute_tf(term, doc):
-    return Counter(doc)[term] / len(doc)
+    return (Counter(doc)[term] / len(doc)) if len(doc) != 0 else 0
 
 
 def compute_cf(dict_document):
